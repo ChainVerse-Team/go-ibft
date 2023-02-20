@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/0xPolygon/go-ibft/messages"
-	"github.com/0xPolygon/go-ibft/messages/proto"
+	"github.com/Chainverse-Team/go-ibft/messages"
+	"github.com/Chainverse-Team/go-ibft/messages/proto"
 )
 
 const (

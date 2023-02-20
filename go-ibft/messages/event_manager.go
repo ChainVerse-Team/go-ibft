@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/0xPolygon/go-ibft/messages/proto"
+	"github.com/Chainverse-Team/go-ibft/messages/proto"
 )
 
 type eventManager struct {
