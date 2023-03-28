@@ -1,7 +1,7 @@
 package messages
 
 import (
-	"github.com/0xPolygon/go-ibft/messages/proto"
+	"github.com/Chainverse-Team/go-ibft/messages/proto"
 	"github.com/google/uuid"
 	"sync"
 	"sync/atomic"

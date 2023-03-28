@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/0xPolygon/go-ibft/core"
+	"github.com/Chainverse-Team/go-ibft/core"
 )
 
 func main() {
