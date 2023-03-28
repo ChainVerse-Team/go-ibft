@@ -3,7 +3,7 @@ package messages
 import (
 	"sync"
 
-	"github.com/Chainverse-Team/go-ibft/messages/proto"
+	"github.com/0xPolygon/go-ibft/messages/proto"
 )
 
 // Messages contains the relevant messages for each view (height, round)
@@ -27,10 +27,12 @@ func (ms *Messages) Subscribe(details SubscriptionDetails) *Subscription {
 	subscription := ms.eventManager.subscribe(details)
 
 	// Check if any condition is already met
-	msgs := ms.GetValidMessages(details.View, details.MessageType, func(_ *proto.Message) bool { return true })
-
-	if details.HasQuorumFn(details.View.Height, msgs, details.MessageType) {
-		ms.eventManager.signalEvent(details.MessageType, details.View)
+	if numMessages := ms.numMessages(
+		details.View,
+		details.MessageType,
+	); numMessages >= details.MinNumMessages {
+		// Conditions are already met, alert the event manager
+		ms.eventManager.signalEvent(details.MessageType, details.View, numMessages)
 	}
 
 	return subscription
@@ -72,20 +74,17 @@ func (ms *Messages) AddMessage(message *proto.Message) {
 	// Append the message to the appropriate queue
 	messages := heightMsgMap.getViewMessages(message.View)
 	messages[string(message.From)] = message
-}
 
-// SignalEvent signals event
-func (ms *Messages) SignalEvent(message *proto.Message) {
 	ms.eventManager.signalEvent(
 		message.Type,
 		&proto.View{
 			Height: message.View.Height,
 			Round:  message.View.Round,
 		},
+		len(messages),
 	)
 }
 
-// Close closes event manager
 func (ms *Messages) Close() {
 	ms.eventManager.close()
 }
@@ -210,52 +209,6 @@ func (ms *Messages) GetValidMessages(
 	}
 
 	return validMessages
-}
-
-// GetExtendedRCC returns Round-Change-Certificate for the highest round
-func (ms *Messages) GetExtendedRCC(
-	height uint64,
-	isValidMessage func(message *proto.Message) bool,
-	isValidRCC func(round uint64, messages []*proto.Message) bool,
-) []*proto.Message {
-	messageType := proto.MessageType_ROUND_CHANGE
-
-	mux := ms.muxMap[messageType]
-	mux.Lock()
-	defer mux.Unlock()
-
-	// Get all ROUND-CHANGE messages for the height
-	roundMessageMap := ms.getMessageMap(messageType)[height]
-
-	var (
-		highestRound uint64
-		extendedRCC  []*proto.Message
-	)
-
-	for round, messages := range roundMessageMap {
-		validMessages := make([]*proto.Message, 0, len(messages))
-
-		if round <= highestRound {
-			continue
-		}
-
-		for _, msg := range messages {
-			if !isValidMessage(msg) {
-				continue
-			}
-
-			validMessages = append(validMessages, msg)
-		}
-
-		if !isValidRCC(round, validMessages) {
-			continue
-		}
-
-		highestRound = round
-		extendedRCC = validMessages
-	}
-
-	return extendedRCC
 }
 
 // GetMostRoundChangeMessages fetches most round change messages

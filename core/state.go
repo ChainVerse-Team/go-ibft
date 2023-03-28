@@ -3,11 +3,33 @@ package core
 import (
 	"sync"
 
-	"github.com/Chainverse-Team/go-ibft/messages"
-	"github.com/Chainverse-Team/go-ibft/messages/proto"
-
-	protoBuf "google.golang.org/protobuf/proto"
+	"github.com/0xPolygon/go-ibft/messages"
+	"github.com/0xPolygon/go-ibft/messages/proto"
 )
+
+type stateType uint8
+
+const (
+	newRound stateType = iota
+	prepare
+	commit
+	fin
+)
+
+func (s stateType) String() (str string) {
+	switch s {
+	case newRound:
+		str = "new round"
+	case prepare:
+		str = "prepare"
+	case commit:
+		str = "commit"
+	case fin:
+		str = "fin"
+	}
+
+	return
+}
 
 type state struct {
 	sync.RWMutex
@@ -18,11 +40,11 @@ type state struct {
 	// latestPC is the latest prepared certificate
 	latestPC *proto.PreparedCertificate
 
-	// latestPreparedProposal is the proposal
+	// latestPreparedProposedBlock is the block
 	// for which Q(N)-1 PREPARE messages were received
-	latestPreparedProposal *proto.Proposal
+	latestPreparedProposedBlock []byte
 
-	//	accepted proposal for current round
+	//	accepted block proposal for current round
 	proposalMessage *proto.Message
 
 	//	validated commit seals
@@ -31,8 +53,7 @@ type state struct {
 	//	flags for different states
 	roundStarted bool
 
-	//  commitSent for current round
-	commitSent bool
+	name stateType
 }
 
 func (s *state) getView() *proto.View {
@@ -51,10 +72,10 @@ func (s *state) clear(height uint64) {
 
 	s.seals = nil
 	s.roundStarted = false
-	s.commitSent = false
+	s.name = newRound
 	s.proposalMessage = nil
 	s.latestPC = nil
-	s.latestPreparedProposal = nil
+	s.latestPreparedProposedBlock = nil
 
 	s.view = &proto.View{
 		Height: height,
@@ -69,11 +90,11 @@ func (s *state) getLatestPC() *proto.PreparedCertificate {
 	return s.latestPC
 }
 
-func (s *state) getLatestPreparedProposal() *proto.Proposal {
+func (s *state) getLatestPreparedProposedBlock() []byte {
 	s.RLock()
 	defer s.RUnlock()
 
-	return s.latestPreparedProposal
+	return s.latestPreparedProposedBlock
 }
 
 func (s *state) getProposalMessage() *proto.Message {
@@ -94,9 +115,7 @@ func (s *state) setProposalMessage(proposalMessage *proto.Message) {
 	s.Lock()
 	defer s.Unlock()
 
-	proposalMsg, _ := protoBuf.Clone(proposalMessage).(*proto.Message)
-
-	s.proposalMessage = proposalMsg
+	s.proposalMessage = proposalMessage
 }
 
 func (s *state) getRound() uint64 {
@@ -113,21 +132,12 @@ func (s *state) getHeight() uint64 {
 	return s.view.Height
 }
 
-func (s *state) getProposal() *proto.Proposal {
+func (s *state) getProposal() []byte {
 	s.RLock()
 	defer s.RUnlock()
 
 	if s.proposalMessage != nil {
 		return messages.ExtractProposal(s.proposalMessage)
-	}
-
-	return nil
-}
-
-func (s *state) getRawDataFromProposal() []byte {
-	proposal := s.getProposal()
-	if proposal != nil {
-		return proposal.RawProposal
 	}
 
 	return nil
@@ -140,25 +150,25 @@ func (s *state) getCommittedSeals() []*messages.CommittedSeal {
 	return s.seals
 }
 
+func (s *state) getStateName() stateType {
+	s.RLock()
+	defer s.RUnlock()
+
+	return s.name
+}
+
+func (s *state) changeState(name stateType) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.name = name
+}
+
 func (s *state) setRoundStarted(started bool) {
 	s.Lock()
 	defer s.Unlock()
 
 	s.roundStarted = started
-}
-
-func (s *state) getCommitSent() bool {
-	s.RLock()
-	defer s.RUnlock()
-
-	return s.commitSent
-}
-
-func (s *state) setCommitSent(sent bool) {
-	s.Lock()
-	defer s.Unlock()
-
-	s.commitSent = sent
 }
 
 func (s *state) setView(view *proto.View) {
@@ -172,11 +182,7 @@ func (s *state) setCommittedSeals(seals []*messages.CommittedSeal) {
 	s.Lock()
 	defer s.Unlock()
 
-	s.seals = s.seals[:0]
-
-	for _, seal := range seals {
-		s.seals = append(s.seals, seal.Copy())
-	}
+	s.seals = seals
 }
 
 func (s *state) newRound() {
@@ -184,17 +190,22 @@ func (s *state) newRound() {
 	defer s.Unlock()
 
 	if !s.roundStarted {
+		// Round is not yet started, kick the round off
+		s.name = newRound
 		s.roundStarted = true
 	}
 }
 
 func (s *state) finalizePrepare(
 	certificate *proto.PreparedCertificate,
-	latestPPB *proto.Proposal,
+	latestPPB []byte,
 ) {
 	s.Lock()
 	defer s.Unlock()
 
-	s.latestPC = certificate.Copy()
-	s.latestPreparedProposal = latestPPB.Copy()
+	s.latestPC = certificate
+	s.latestPreparedProposedBlock = latestPPB
+
+	// Move to the commit state
+	s.name = commit
 }
