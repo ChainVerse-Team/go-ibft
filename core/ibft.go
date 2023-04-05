@@ -143,9 +143,9 @@ func (i *IBFT) startRoundTimer(ctx context.Context, round uint64) {
 	}
 }
 
-//	signalRoundExpired notifies the sequence routine (RunSequence) that it
-//	should move to a new round. The quit channel is used to abort this call
-//	if another routine has already signaled a round change request.
+// signalRoundExpired notifies the sequence routine (RunSequence) that it
+// should move to a new round. The quit channel is used to abort this call
+// if another routine has already signaled a round change request.
 func (i *IBFT) signalRoundExpired(ctx context.Context) {
 	select {
 	case i.roundExpired <- struct{}{}:
@@ -153,8 +153,8 @@ func (i *IBFT) signalRoundExpired(ctx context.Context) {
 	}
 }
 
-//	signalRoundDone notifies the sequence routine (RunSequence) that the
-//	consensus sequence is finished
+// signalRoundDone notifies the sequence routine (RunSequence) that the
+// consensus sequence is finished
 func (i *IBFT) signalRoundDone(ctx context.Context) {
 	select {
 	case i.roundDone <- struct{}{}:
@@ -501,7 +501,7 @@ func (i *IBFT) proposalMatchesCertificate(
 	return true
 }
 
-//	runStates is the main loop which performs state transitions
+// runStates is the main loop which performs state transitions
 func (i *IBFT) runStates(ctx context.Context) {
 	var timeout error
 
@@ -569,8 +569,9 @@ func (i *IBFT) runNewRound(ctx context.Context) error {
 			i.acceptProposal(proposalMessage)
 
 			// Multicast the PREPARE message
-			i.sendPrepareMessage(view)
-
+			if i.backend.IsActiveValidatorSubset() {
+				i.sendPrepareMessage(view)
+			}
 			i.log.Debug("prepare message multicasted")
 
 			// Move to the prepare state
@@ -713,8 +714,8 @@ func (i *IBFT) validateProposal(msg *proto.Message, view *proto.View) bool {
 	return bytes.Equal(expectedHash, proposalHash)
 }
 
-//	handlePrePrepare parses the received proposal and performs
-//	a transition to PREPARE state, if the proposal is valid
+// handlePrePrepare parses the received proposal and performs
+// a transition to PREPARE state, if the proposal is valid
 func (i *IBFT) handlePrePrepare(view *proto.View) *proto.Message {
 	isValidPrePrepare := func(message *proto.Message) bool {
 		if view.Round == 0 {
@@ -780,8 +781,8 @@ func (i *IBFT) runPrepare(ctx context.Context) error {
 	}
 }
 
-//	handlePrepare parses available prepare messages and performs
-//	a transition to COMMIT state, if quorum was reached
+// handlePrepare parses available prepare messages and performs
+// a transition to COMMIT state, if quorum was reached
 func (i *IBFT) handlePrepare(view *proto.View, quorum uint64) bool {
 	isValidPrepare := func(message *proto.Message) bool {
 		// Verify that the proposal hash is valid
@@ -803,7 +804,9 @@ func (i *IBFT) handlePrepare(view *proto.View, quorum uint64) bool {
 	}
 
 	// Multicast the COMMIT message
-	i.sendCommitMessage(view)
+	if i.backend.IsActiveValidatorSubset() {
+		i.sendCommitMessage(view)
+	}
 
 	i.log.Debug("commit message multicasted")
 
@@ -860,8 +863,8 @@ func (i *IBFT) runCommit(ctx context.Context) error {
 	}
 }
 
-//	handleCommit parses available commit messages and performs
-//	a transition to FIN state, if quorum was reached
+// handleCommit parses available commit messages and performs
+// a transition to FIN state, if quorum was reached
 func (i *IBFT) handleCommit(view *proto.View, quorum uint64) bool {
 	isValidCommit := func(message *proto.Message) bool {
 		var (
@@ -1028,7 +1031,7 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 	return message.View.Round >= i.state.getRound()
 }
 
-//	ExtendRoundTimeout extends each round's timer by the specified amount.
+// ExtendRoundTimeout extends each round's timer by the specified amount.
 func (i *IBFT) ExtendRoundTimeout(amount time.Duration) {
 	i.additionalTimeout = amount
 }

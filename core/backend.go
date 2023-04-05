@@ -68,4 +68,7 @@ type Backend interface {
 	// Quorum returns what is the quorum size for the
 	// specified block height.
 	Quorum(blockHeight uint64) uint64
+
+	// Verify is active validator
+	IsActiveValidatorSubset() bool
 }
