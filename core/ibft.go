@@ -85,6 +85,8 @@ type IBFT struct {
 	// baseRoundTimeout is the base round timeout for each round of consensus
 	baseRoundTimeout time.Duration
 
+	additionalEpochTimeOut time.Duration
+
 	// wg is a simple barrier used for synchronizing
 	// state modification routines
 	wg sync.WaitGroup
@@ -124,13 +126,17 @@ func (i *IBFT) startRoundTimer(ctx context.Context, round uint64) {
 	defer i.wg.Done()
 
 	var (
-		duration     = int(i.baseRoundTimeout)
-		roundFactor  = int(math.Pow(float64(2), float64(round)))
-		roundTimeout = time.Duration(duration * roundFactor)
+		duration        = int(i.baseRoundTimeout)
+		roundFactor     = int(math.Pow(float64(2), float64(round)))
+		roundTimeout    = time.Duration(duration * roundFactor)
+		epochAdditional = 0 * time.Second
 	)
 
 	//	Create a new timer instance
-	timer := time.NewTimer(roundTimeout + i.additionalTimeout)
+	if i.backend.IsEpochHeight() {
+		epochAdditional = i.additionalEpochTimeOut
+	}
+	timer := time.NewTimer(roundTimeout + i.additionalTimeout + epochAdditional)
 
 	select {
 	case <-ctx.Done():
@@ -1034,6 +1040,10 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 // ExtendRoundTimeout extends each round's timer by the specified amount.
 func (i *IBFT) ExtendRoundTimeout(amount time.Duration) {
 	i.additionalTimeout = amount
+}
+
+func (i *IBFT) ExtendEpochTimeout(amount time.Duration) {
+	i.additionalEpochTimeOut = amount
 }
 
 // validPC verifies that  the prepared certificate is valid
