@@ -85,6 +85,8 @@ type IBFT struct {
 	// baseRoundTimeout is the base round timeout for each round of consensus
 	baseRoundTimeout time.Duration
 
+	additionalEpochTimeOut time.Duration
+
 	// wg is a simple barrier used for synchronizing
 	// state modification routines
 	wg sync.WaitGroup
@@ -120,7 +122,7 @@ func NewIBFT(
 
 // startRoundTimer starts the exponential round timer, based on the
 // passed in round number
-func (i *IBFT) startRoundTimer(ctx context.Context, round uint64) {
+func (i *IBFT) startRoundTimer(ctx context.Context, round uint64, height uint64) {
 	defer i.wg.Done()
 
 	var (
@@ -130,7 +132,11 @@ func (i *IBFT) startRoundTimer(ctx context.Context, round uint64) {
 	)
 
 	//	Create a new timer instance
-	timer := time.NewTimer(roundTimeout + i.additionalTimeout)
+	timerDuration := roundTimeout + i.additionalTimeout
+	if i.backend.IsEpochHeight(height) {
+		timerDuration += i.additionalEpochTimeOut
+	}
+	timer := time.NewTimer(timerDuration)
 
 	select {
 	case <-ctx.Done():
@@ -301,7 +307,7 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 		i.wg.Add(4)
 
 		// Start the round timer worker
-		go i.startRoundTimer(ctxRound, currentRound)
+		go i.startRoundTimer(ctxRound, currentRound, h)
 
 		//	Jump round on proposals from higher rounds
 		go i.watchForFutureProposal(ctxRound)
@@ -1034,6 +1040,10 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 // ExtendRoundTimeout extends each round's timer by the specified amount.
 func (i *IBFT) ExtendRoundTimeout(amount time.Duration) {
 	i.additionalTimeout = amount
+}
+
+func (i *IBFT) ExtendEpochTimeout(amount time.Duration) {
+	i.additionalEpochTimeOut = amount
 }
 
 // validPC verifies that  the prepared certificate is valid

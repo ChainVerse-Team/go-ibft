@@ -71,4 +71,6 @@ type Backend interface {
 
 	// Verify is active validator
 	IsActiveValidatorSubset() bool
+
+	IsEpochHeight(height uint64) bool
 }
