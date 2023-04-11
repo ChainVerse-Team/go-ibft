@@ -122,21 +122,21 @@ func NewIBFT(
 
 // startRoundTimer starts the exponential round timer, based on the
 // passed in round number
-func (i *IBFT) startRoundTimer(ctx context.Context, round uint64) {
+func (i *IBFT) startRoundTimer(ctx context.Context, round uint64, height uint64) {
 	defer i.wg.Done()
 
 	var (
-		duration        = int(i.baseRoundTimeout)
-		roundFactor     = int(math.Pow(float64(2), float64(round)))
-		roundTimeout    = time.Duration(duration * roundFactor)
-		epochAdditional = 0 * time.Second
+		duration     = int(i.baseRoundTimeout)
+		roundFactor  = int(math.Pow(float64(2), float64(round)))
+		roundTimeout = time.Duration(duration * roundFactor)
 	)
 
 	//	Create a new timer instance
-	if i.backend.IsEpochHeight() {
-		epochAdditional = i.additionalEpochTimeOut
+	timerDuration := roundTimeout + i.additionalTimeout
+	if i.backend.IsEpochHeight(height) {
+		timerDuration += i.additionalEpochTimeOut
 	}
-	timer := time.NewTimer(roundTimeout + i.additionalTimeout + epochAdditional)
+	timer := time.NewTimer(timerDuration)
 
 	select {
 	case <-ctx.Done():
@@ -307,7 +307,7 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 		i.wg.Add(4)
 
 		// Start the round timer worker
-		go i.startRoundTimer(ctxRound, currentRound)
+		go i.startRoundTimer(ctxRound, currentRound, h)
 
 		//	Jump round on proposals from higher rounds
 		go i.watchForFutureProposal(ctxRound)
