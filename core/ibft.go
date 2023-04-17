@@ -342,8 +342,9 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 
 			newRound := currentRound + 1
 			i.moveToNewRound(newRound)
-
-			i.sendRoundChangeMessage(h, newRound)
+			if i.backend.IsActiveValidatorSubset() {
+				i.sendRoundChangeMessage(h, newRound)
+			}
 		case <-i.roundDone:
 			// The consensus cycle for the block height is finished.
 			// Stop all running worker threads
