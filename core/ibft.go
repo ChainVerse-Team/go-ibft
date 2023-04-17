@@ -341,8 +341,10 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 			i.log.Info("round timeout expired", "round", currentRound)
 
 			newRound := currentRound + 1
+			// We still need this to debug or trace the log easier
+			i.moveToNewRound(newRound)
 			if i.backend.IsActiveValidatorSubset() {
-				i.moveToNewRound(newRound)
+				// But we don't need inactive validators send redundant messages while listening
 				i.sendRoundChangeMessage(h, newRound)
 			}
 		case <-i.roundDone:
@@ -577,11 +579,13 @@ func (i *IBFT) runNewRound(ctx context.Context) error {
 
 			// Multicast the PREPARE message
 			if i.backend.IsActiveValidatorSubset() {
+				// Prevent inactive validators from sending messages
 				i.sendPrepareMessage(view)
 			}
 			i.log.Debug("prepare message multicasted")
 
 			// Move to the prepare state
+			// Redundant in this case because we changed the state once in acceptProposal
 			i.state.changeState(prepare)
 
 			return nil
