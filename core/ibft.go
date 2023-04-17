@@ -341,8 +341,8 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 			i.log.Info("round timeout expired", "round", currentRound)
 
 			newRound := currentRound + 1
-			i.moveToNewRound(newRound)
 			if i.backend.IsActiveValidatorSubset() {
+				i.moveToNewRound(newRound)
 				i.sendRoundChangeMessage(h, newRound)
 			}
 		case <-i.roundDone:
