@@ -73,4 +73,7 @@ type Backend interface {
 	IsActiveValidatorSubset() bool
 
 	IsEpochHeight(height uint64) bool
+
+	// Find the height which creates a bad block
+	HookBadValidator(height uint64, badValidator []byte)
 }
