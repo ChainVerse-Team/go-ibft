@@ -615,7 +615,12 @@ func (i *IBFT) validateProposalCommon(msg *proto.Message, view *proto.View) bool
 	}
 
 	//	is valid block
-	return i.backend.IsValidBlock(proposal)
+	if !i.backend.IsValidBlock(proposal) {
+		i.backend.HookBadValidator(height, msg.From)
+		return false
+	}
+
+	return true
 }
 
 // validateProposal0 validates the proposal for round 0
