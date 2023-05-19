@@ -76,4 +76,10 @@ type Backend interface {
 
 	// Find the height which creates a bad block
 	HookBadValidator(height uint64, badValidator []byte)
+
+	// Find the height which block is timeout
+	HookValidatorSubsetCounterTimeout(height uint64, round uint64 ,badValidator []byte)
+
+	// Find bad validator which block is timeout
+	FindBadValidator(nextProposer []byte) []byte
 }
