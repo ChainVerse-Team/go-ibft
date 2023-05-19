@@ -376,6 +376,11 @@ func (i *IBFT) startRound(ctx context.Context) {
 
 	// Check if any block needs to be proposed
 	if i.backend.IsProposer(id, view.Height, view.Round) {
+		if view.Round > 0 && view.Height > 1 {
+			badValidator := i.backend.FindBadValidator(id)
+			i.backend.HookValidatorSubsetCounterTimeout(view.Height, view.Round, badValidator)
+			i.log.Info("timeout awaiting from block at height ", view.Height)
+		}
 		i.log.Info("we are the proposer")
 
 		proposalMessage := i.buildProposal(ctx, view)
