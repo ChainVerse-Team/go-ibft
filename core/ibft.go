@@ -377,7 +377,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 	// Check if any block needs to be proposed
 	if i.backend.IsProposer(id, view.Height, view.Round) {
 		if view.Round > 0 && view.Height > 1 {
-			badValidator := i.backend.FindBadValidator(id)
+			badValidator := i.backend.FindBadValidatorAtHeight(view.Height, id)
 			i.backend.HookValidatorSubsetCounterTimeout(view.Height, view.Round, badValidator)
 			i.log.Info("timeout awaiting from block at height ", view.Height)
 		}
