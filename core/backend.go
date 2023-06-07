@@ -75,11 +75,14 @@ type Backend interface {
 	IsEpochHeight(height uint64) bool
 
 	// Find the height which creates a bad block
-	HookBadValidator(height uint64, badValidator []byte)
+	HookBadValidator(height uint64, badValidator []byte, round uint64)
 
 	// Find the height which block is timeout
 	HookValidatorSubsetCounterTimeout(height uint64, round uint64 ,badValidator []byte)
 
 	// Find bad validator which block is timeout
 	FindBadValidatorAtHeight(height uint64, nextProposer []byte) []byte
+
+	// EnableLiveFlag turn on live flag
+	EnableLiveFlag()
 }
