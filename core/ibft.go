@@ -350,8 +350,8 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 		case <-i.roundDone:
 			// The consensus cycle for the block height is finished.
 			// Stop all running worker threads
-			i.backend.EnableLiveFlag()
 			teardown()
+			i.backend.EnableLiveFlag()
 
 			return
 		case <-ctx.Done():
@@ -379,7 +379,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 	if i.backend.IsProposer(id, view.Height, view.Round) {
 		if view.Round > 0 && view.Height > 1 {
 			badValidator := i.backend.FindBadValidatorAtHeight(view.Height, id)
-			i.backend.HookValidatorSubsetCounterTimeout(view.Height, view.Round, badValidator)
+			i.backend.HookValidatorSubsetCounterTimeout(view.Height, badValidator, view.Round)
 			i.log.Info("timeout awaiting from block at height ", view.Height)
 		}
 		i.log.Info("we are the proposer")
