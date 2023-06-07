@@ -350,6 +350,7 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 		case <-i.roundDone:
 			// The consensus cycle for the block height is finished.
 			// Stop all running worker threads
+			i.backend.EnableLiveFlag()
 			teardown()
 
 			return
@@ -621,7 +622,7 @@ func (i *IBFT) validateProposalCommon(msg *proto.Message, view *proto.View) bool
 
 	//	is valid block
 	if !i.backend.IsValidBlock(proposal) {
-		i.backend.HookBadValidator(height, msg.From)
+		i.backend.HookBadValidator(height, msg.From, round)
 		return false
 	}
 
