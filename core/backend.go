@@ -85,4 +85,7 @@ type Backend interface {
 
 	// EnableLiveFlag turn on live flag
 	EnableLiveFlag()
+
+	// IncreaseCounterTimeout counts number of suspend transaction 
+	IncreaseCounterTimeout()
 }

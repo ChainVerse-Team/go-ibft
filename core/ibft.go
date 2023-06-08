@@ -375,6 +375,10 @@ func (i *IBFT) startRound(ctx context.Context) {
 		view = i.state.getView()
 	)
 
+	if view.Round > 0 {
+		i.backend.IncreaseCounterTimeout()
+	}
+
 	// Check if any block needs to be proposed
 	if i.backend.IsProposer(id, view.Height, view.Round) {
 		if view.Round > 0 && view.Height > 1 {
