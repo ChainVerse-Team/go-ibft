@@ -375,7 +375,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 		view = i.state.getView()
 	)
 
-	if view.Round > 0 {
+	if view.Round > 0 && view.Height > 1 {
 		i.backend.IncreaseCounterTimeout()
 	}
 
