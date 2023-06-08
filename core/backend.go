@@ -69,7 +69,7 @@ type Backend interface {
 	// specified block height.
 	Quorum(blockHeight uint64) uint64
 
-	// Verify is active validator
+	// Verify is active validator subset
 	IsActiveValidatorSubset() bool
 
 	IsEpochHeight(height uint64) bool
@@ -88,4 +88,10 @@ type Backend interface {
 
 	// IncreaseCounterTimeout counts number of suspend transaction 
 	IncreaseCounterTimeout()
+
+	// Verify is active validator
+	IsActiveValidator() bool
+
+	// Check the status of current signer
+	IsActiveSignerStatus() bool
 }
