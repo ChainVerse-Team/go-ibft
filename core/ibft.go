@@ -351,10 +351,6 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 			// The consensus cycle for the block height is finished.
 			// Stop all running worker threads
 			teardown()
-			
-			if i.backend.IsActiveValidator(){
-				i.backend.EnableLiveFlag()
-			}
 			return
 		case <-ctx.Done():
 			teardown()
@@ -390,18 +386,12 @@ func (i *IBFT) startRound(ctx context.Context) {
 		}
 		i.log.Info("we are the proposer")
 
-		var proposalMessage *proto.Message
-		if i.backend.IsActiveSignerStatus() {
-			proposalMessage = i.buildProposal(ctx, view)
-		} else {
-			if proposalMessage == nil {
-				i.log.Error("unable to build proposal")
-	
-				return
-			}
+		proposalMessage := i.buildProposal(ctx, view)
+		if proposalMessage == nil {
+			i.log.Error("unable to build proposal")
+
+			return
 		}
-		
-		
 
 		i.acceptProposal(proposalMessage)
 		i.log.Debug("block proposal accepted")
