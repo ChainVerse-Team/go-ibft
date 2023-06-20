@@ -83,15 +83,9 @@ type Backend interface {
 	// Find bad validator which block is timeout
 	FindBadValidatorAtHeight(height uint64, nextProposer []byte) []byte
 
-	// EnableLiveFlag turn on live flag
-	EnableLiveFlag()
-
 	// IncreaseCounterTimeout counts number of suspend transaction 
 	IncreaseCounterTimeout()
 
 	// Verify is active validator
 	IsActiveValidator() bool
-
-	// Check the status of current signer
-	IsActiveSignerStatus() bool
 }
