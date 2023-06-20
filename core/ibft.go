@@ -373,10 +373,6 @@ func (i *IBFT) startRound(ctx context.Context) {
 		view = i.state.getView()
 	)
 
-	if view.Round > 0 && view.Height > 1 {
-		i.backend.IncreaseCounterTimeout()
-	}
-
 	// Check if any block needs to be proposed
 	if i.backend.IsProposer(id, view.Height, view.Round) {
 		if view.Round > 0 && view.Height > 1 {
@@ -399,6 +395,12 @@ func (i *IBFT) startRound(ctx context.Context) {
 		i.sendPreprepareMessage(proposalMessage)
 
 		i.log.Debug("pre-prepare message multicasted")
+	} else {
+		if view.Round > 0 && view.Height > 1 {
+			zeroByte := []byte{0}
+			i.backend.HookValidatorSubsetCounterTimeout(view.Height, zeroByte, view.Round)
+			i.backend.IncreaseCounterTimeout()
+		}
 	}
 
 	i.runStates(ctx)
@@ -624,7 +626,7 @@ func (i *IBFT) validateProposalCommon(msg *proto.Message, view *proto.View) bool
 
 	//	is valid block
 	if !i.backend.IsValidBlock(proposal) {
-		i.backend.HookBadValidator(height, msg.From, round)
+		i.backend.HookBadValidator(height, msg.From)
 		return false
 	}
 

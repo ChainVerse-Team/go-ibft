@@ -75,7 +75,7 @@ type Backend interface {
 	IsEpochHeight(height uint64) bool
 
 	// Find the height which creates a bad block
-	HookBadValidator(height uint64, badValidator []byte, round uint64)
+	HookBadValidator(height uint64, badValidator []byte)
 
 	// Find the height which block is timeout
 	HookValidatorSubsetCounterTimeout(height uint64, badValidator []byte, round uint64)
