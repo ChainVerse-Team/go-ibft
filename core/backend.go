@@ -83,8 +83,11 @@ type Backend interface {
 	// Find bad validator which block is timeout
 	FindBadValidatorAtHeight(height uint64, nextProposer []byte) []byte
 
-	// IncreaseCounterTimeout counts number of suspend transaction 
-	IncreaseCounterTimeout()
+	// IncreaseCounterSuspendTx counts number of suspend transaction 
+	IncreaseCounterSuspendTx()
+
+	// IncreaseCounterBanTx counts number of ban transaction
+	IncreaseCounterBanTx()
 
 	// Verify is active validator
 	IsActiveValidator() bool

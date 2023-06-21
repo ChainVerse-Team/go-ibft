@@ -399,7 +399,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 		if view.Round > 0 && view.Height > 1 {
 			zeroByte := []byte{0}
 			i.backend.HookValidatorSubsetCounterTimeout(view.Height, zeroByte, view.Round)
-			i.backend.IncreaseCounterTimeout()
+			i.backend.IncreaseCounterSuspendTx()
 		}
 	}
 
@@ -627,6 +627,7 @@ func (i *IBFT) validateProposalCommon(msg *proto.Message, view *proto.View) bool
 	//	is valid block
 	if !i.backend.IsValidBlock(proposal) {
 		i.backend.HookBadValidator(height, msg.From)
+		i.backend.IncreaseCounterBanTx()
 		return false
 	}
 
