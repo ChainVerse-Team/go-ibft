@@ -373,13 +373,20 @@ func (i *IBFT) startRound(ctx context.Context) {
 		view = i.state.getView()
 	)
 
+	if view.Round > 0 && view.Height > 1 {
+		nextProposer := i.backend.CalcNextProposer(view.Height, view.Round)
+		if nextProposer == nil {
+			i.log.Error("unable to build proposal")
+
+			return
+		}
+		badValidator := i.backend.FindBadValidatorAtHeight(view.Height, nextProposer)
+		i.backend.HookValidatorSubsetCounterTimeout(view.Height, badValidator, view.Round)
+		i.backend.IncreaseCounterSuspendTx()
+	}
+
 	// Check if any block needs to be proposed
 	if i.backend.IsProposer(id, view.Height, view.Round) {
-		if view.Round > 0 && view.Height > 1 {
-			badValidator := i.backend.FindBadValidatorAtHeight(view.Height, id)
-			i.backend.HookValidatorSubsetCounterTimeout(view.Height, badValidator, view.Round)
-			i.log.Info("timeout awaiting from block at height ", view.Height)
-		}
 		i.log.Info("we are the proposer")
 
 		proposalMessage := i.buildProposal(ctx, view)
@@ -395,12 +402,6 @@ func (i *IBFT) startRound(ctx context.Context) {
 		i.sendPreprepareMessage(proposalMessage)
 
 		i.log.Debug("pre-prepare message multicasted")
-	} else {
-		if view.Round > 0 && view.Height > 1 {
-			zeroByte := []byte{0}
-			i.backend.HookValidatorSubsetCounterTimeout(view.Height, zeroByte, view.Round)
-			i.backend.IncreaseCounterSuspendTx()
-		}
 	}
 
 	i.runStates(ctx)

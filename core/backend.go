@@ -39,6 +39,9 @@ type Verifier interface {
 	// IsProposer checks if the passed in ID is the Proposer for current view (sequence, round)
 	IsProposer(id []byte, height, round uint64) bool
 
+	// CalcNextProposer function to find next proposer and check state of next proposer
+	CalcNextProposer(height uint64, round uint64) ([]byte)
+
 	// IsValidProposalHash checks if the hash matches the proposal
 	IsValidProposalHash(proposal, hash []byte) bool
 
