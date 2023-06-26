@@ -52,7 +52,7 @@ func main() {
 	logger := NewIBFTLogger(...)
 	transport := NewIBFTTransport(...)
 
-	ibft := NewIBFT(logger, backend, transport)
+	ibft := NewIBFT(logger, backend, transport, breakingVerion)
 
 	blockHeight := uint64(1)
 	ctx, cancelFn := context.WithCancel(context.Background())

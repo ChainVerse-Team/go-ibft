@@ -40,6 +40,8 @@ var (
 	errTimeoutExpired = errors.New("round timeout expired")
 
 	round0Timeout = 10 * time.Second
+
+	applyBreakChange0 uint64 = 100
 )
 
 // IBFT represents a single instance of the IBFT state machine
@@ -97,6 +99,7 @@ func NewIBFT(
 	log Logger,
 	backend Backend,
 	transport Transport,
+	breakingVersion string,
 ) *IBFT {
 	return &IBFT{
 		log:              log,
@@ -111,6 +114,7 @@ func NewIBFT(
 			view: &proto.View{
 				Height: 0,
 				Round:  0,
+				Version: breakingVersion,
 			},
 			seals:        make([]*messages.CommittedSeal, 0),
 			roundStarted: false,
@@ -1055,10 +1059,13 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 		return false
 	}
 
-	// Make sure the current version is == the message version
-	if i.state.getVersion() != message.View.Version {
-		return false
+	if message.View.Height >= applyBreakChange0{
+		// Make sure the current version is == the message version
+		if i.state.getVersion() != message.View.Version {
+			return false
+		}
 	}
+	
 
 	// Make sure the message round is >= the current state round
 	return message.View.Round >= i.state.getRound()
