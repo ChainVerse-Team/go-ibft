@@ -132,6 +132,13 @@ func (s *state) getHeight() uint64 {
 	return s.view.Height
 }
 
+func (s *state) getVersion() string {
+	s.RLock()
+	defer s.RUnlock()
+
+	return s.view.Version
+}
+
 func (s *state) getProposal() []byte {
 	s.RLock()
 	defer s.RUnlock()

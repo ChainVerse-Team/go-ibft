@@ -18,6 +18,9 @@ message View {
 
   // round represents the round number in the specific height
   uint64 round = 2;
+
+  // version represents the version number in the blockchain
+  string version = 3;
 }
 
 // Message defines the base message structure
