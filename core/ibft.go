@@ -1055,6 +1055,11 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 		return false
 	}
 
+	// Make sure the current version is == the message version
+	if i.state.getVersion() != message.View.Version {
+		return false
+	}
+
 	// Make sure the message round is >= the current state round
 	return message.View.Round >= i.state.getRound()
 }
