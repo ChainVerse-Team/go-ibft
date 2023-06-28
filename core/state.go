@@ -63,6 +63,7 @@ func (s *state) getView() *proto.View {
 	return &proto.View{
 		Height: s.view.Height,
 		Round:  s.view.Round,
+		Version: s.view.Version,
 	}
 }
 
@@ -80,6 +81,7 @@ func (s *state) clear(height uint64) {
 	s.view = &proto.View{
 		Height: height,
 		Round:  0,
+		Version: s.view.Version,
 	}
 }
 

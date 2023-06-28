@@ -80,6 +80,7 @@ func (ms *Messages) AddMessage(message *proto.Message) {
 		&proto.View{
 			Height: message.View.Height,
 			Round:  message.View.Round,
+			Version: message.View.Version,
 		},
 		len(messages),
 	)
