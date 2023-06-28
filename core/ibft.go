@@ -209,6 +209,7 @@ func (i *IBFT) watchForFutureProposal(ctx context.Context) {
 				View: &proto.View{
 					Height: height,
 					Round:  nextRound,
+					Version: view.Version,
 				},
 				MinNumMessages: 1,
 				HasMinRound:    true,
@@ -226,7 +227,7 @@ func (i *IBFT) watchForFutureProposal(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case round := <-sub.SubCh:
-			proposal := i.handlePrePrepare(&proto.View{Height: height, Round: round})
+			proposal := i.handlePrePrepare(&proto.View{Height: height, Round: round, Version: view.Version})
 			if proposal == nil {
 				continue
 			}
@@ -259,6 +260,7 @@ func (i *IBFT) watchForRoundChangeCertificates(ctx context.Context) {
 			View: &proto.View{
 				Height: height,
 				Round:  round + 1, // only for higher rounds
+				Version: view.Version,
 			},
 			MinNumMessages: 1,
 			HasMinRound:    true,
@@ -276,6 +278,7 @@ func (i *IBFT) watchForRoundChangeCertificates(ctx context.Context) {
 				&proto.View{
 					Height: height,
 					Round:  round,
+					Version: view.Version,
 				},
 				quorum,
 			)
@@ -422,6 +425,7 @@ func (i *IBFT) waitForRCC(
 		view   = &proto.View{
 			Height: height,
 			Round:  round,
+			Version: i.state.getVersion(),
 		}
 
 		sub = i.messages.Subscribe(
@@ -972,6 +976,7 @@ func (i *IBFT) buildProposal(ctx context.Context, view *proto.View) *proto.Messa
 			&proto.View{
 				Height: height,
 				Round:  round,
+				Version: view.Version,
 			},
 		)
 	}
@@ -1007,6 +1012,7 @@ func (i *IBFT) buildProposal(ctx context.Context, view *proto.View) *proto.Messa
 			&proto.View{
 				Height: height,
 				Round:  round,
+				Version: view.Version,
 			},
 		)
 	}
@@ -1017,6 +1023,7 @@ func (i *IBFT) buildProposal(ctx context.Context, view *proto.View) *proto.Messa
 		&proto.View{
 			Height: height,
 			Round:  round,
+			Version: view.Version,
 		},
 	)
 }
@@ -1170,6 +1177,7 @@ func (i *IBFT) sendRoundChangeMessage(height, newRound uint64) {
 			&proto.View{
 				Height: height,
 				Round:  newRound,
+				Version: i.state.getVersion(),
 			},
 		),
 	)
