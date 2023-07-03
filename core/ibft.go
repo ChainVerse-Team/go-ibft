@@ -954,6 +954,7 @@ func (i *IBFT) moveToNewRound(round uint64) {
 	i.state.setView(&proto.View{
 		Height: i.state.getHeight(),
 		Round:  round,
+		Version: i.state.getVersion(),
 	})
 
 	i.state.setRoundStarted(false)
