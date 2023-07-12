@@ -112,8 +112,8 @@ func NewIBFT(
 		roundCertificate: make(chan uint64),
 		state: &state{
 			view: &proto.View{
-				Height: 0,
-				Round:  0,
+				Height:  0,
+				Round:   0,
 				Version: breakingVersion,
 			},
 			seals:        make([]*messages.CommittedSeal, 0),
@@ -207,8 +207,8 @@ func (i *IBFT) watchForFutureProposal(ctx context.Context) {
 			messages.SubscriptionDetails{
 				MessageType: proto.MessageType_PREPREPARE,
 				View: &proto.View{
-					Height: height,
-					Round:  nextRound,
+					Height:  height,
+					Round:   nextRound,
 					Version: view.Version,
 				},
 				MinNumMessages: 1,
@@ -258,8 +258,8 @@ func (i *IBFT) watchForRoundChangeCertificates(ctx context.Context) {
 		sub = i.messages.Subscribe(messages.SubscriptionDetails{
 			MessageType: proto.MessageType_ROUND_CHANGE,
 			View: &proto.View{
-				Height: height,
-				Round:  round + 1, // only for higher rounds
+				Height:  height,
+				Round:   round + 1, // only for higher rounds
 				Version: view.Version,
 			},
 			MinNumMessages: 1,
@@ -276,8 +276,8 @@ func (i *IBFT) watchForRoundChangeCertificates(ctx context.Context) {
 		case round := <-sub.SubCh:
 			rcc := i.handleRoundChangeMessage(
 				&proto.View{
-					Height: height,
-					Round:  round,
+					Height:  height,
+					Round:   round,
 					Version: view.Version,
 				},
 				quorum,
@@ -305,6 +305,9 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 
 	for {
 		view := i.state.getView()
+
+		// Run preparation
+		i.backend.OnBeforeRoundStarts(view)
 
 		i.log.Info("round started", "round", view.Round)
 
@@ -423,8 +426,8 @@ func (i *IBFT) waitForRCC(
 	var (
 		quorum = i.backend.Quorum(height)
 		view   = &proto.View{
-			Height: height,
-			Round:  round,
+			Height:  height,
+			Round:   round,
 			Version: i.state.getVersion(),
 		}
 
@@ -952,8 +955,8 @@ func (i *IBFT) runFin() {
 // moveToNewRound moves the state to the new round
 func (i *IBFT) moveToNewRound(round uint64) {
 	i.state.setView(&proto.View{
-		Height: i.state.getHeight(),
-		Round:  round,
+		Height:  i.state.getHeight(),
+		Round:   round,
 		Version: i.state.getVersion(),
 	})
 
@@ -975,8 +978,8 @@ func (i *IBFT) buildProposal(ctx context.Context, view *proto.View) *proto.Messa
 			proposal,
 			nil,
 			&proto.View{
-				Height: height,
-				Round:  round,
+				Height:  height,
+				Round:   round,
 				Version: view.Version,
 			},
 		)
@@ -1011,8 +1014,8 @@ func (i *IBFT) buildProposal(ctx context.Context, view *proto.View) *proto.Messa
 			proposal,
 			rcc,
 			&proto.View{
-				Height: height,
-				Round:  round,
+				Height:  height,
+				Round:   round,
 				Version: view.Version,
 			},
 		)
@@ -1022,8 +1025,8 @@ func (i *IBFT) buildProposal(ctx context.Context, view *proto.View) *proto.Messa
 		previousProposal,
 		rcc,
 		&proto.View{
-			Height: height,
-			Round:  round,
+			Height:  height,
+			Round:   round,
 			Version: view.Version,
 		},
 	)
@@ -1067,13 +1070,12 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 		return false
 	}
 
-	if message.View.Height >= applyBreakChange0{
+	if message.View.Height >= applyBreakChange0 {
 		// Make sure the current version is == the message version
 		if i.state.getVersion() != message.View.Version {
 			return false
 		}
 	}
-	
 
 	// Make sure the message round is >= the current state round
 	return message.View.Round >= i.state.getRound()
@@ -1176,8 +1178,8 @@ func (i *IBFT) sendRoundChangeMessage(height, newRound uint64) {
 			i.state.getLatestPreparedProposedBlock(),
 			i.state.getLatestPC(),
 			&proto.View{
-				Height: height,
-				Round:  newRound,
+				Height:  height,
+				Round:   newRound,
 				Version: i.state.getVersion(),
 			},
 		),
