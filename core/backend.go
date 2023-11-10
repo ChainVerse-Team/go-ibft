@@ -40,7 +40,7 @@ type Verifier interface {
 	IsProposer(id []byte, height, round uint64) bool
 
 	// CalcNextProposer function to find next proposer and check state of next proposer
-	CalcNextProposer(height uint64, round uint64) ([]byte)
+	CalcNextProposer(height uint64, round uint64) []byte
 
 	// IsValidProposalHash checks if the hash matches the proposal
 	IsValidProposalHash(proposal, hash []byte) bool
@@ -86,7 +86,7 @@ type Backend interface {
 	// Find bad validator which block is timeout
 	FindBadValidatorAtHeight(height uint64, nextProposer []byte) []byte
 
-	// IncreaseCounterSuspendTx counts number of suspend transaction 
+	// IncreaseCounterSuspendTx counts number of suspend transaction
 	IncreaseCounterSuspendTx()
 
 	// IncreaseCounterBanTx counts number of ban transaction
@@ -94,4 +94,7 @@ type Backend interface {
 
 	// Verify is active validator
 	IsActiveValidator() bool
+
+	// OnBeforeRoundStarts handle most of time-consuming logics
+	OnBeforeRoundStarts(view *proto.View)
 }
