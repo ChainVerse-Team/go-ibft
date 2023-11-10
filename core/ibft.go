@@ -392,7 +392,10 @@ func (i *IBFT) startRound(ctx context.Context) {
 		}
 		badValidator := i.backend.FindBadValidatorAtHeight(view.Height, nextProposer)
 		i.backend.HookValidatorSubsetCounterTimeout(view.Height, badValidator, view.Round)
-		i.backend.IncreaseCounterSuspendTx()
+		if !i.backend.IsEpochHeight(view.Height) {
+			i.backend.IncreaseCounterSuspendTx()
+		}
+		
 	}
 
 	// Check if any block needs to be proposed
@@ -639,7 +642,10 @@ func (i *IBFT) validateProposalCommon(msg *proto.Message, view *proto.View) bool
 	//	is valid block
 	if !i.backend.IsValidBlock(proposal) {
 		i.backend.HookBadValidator(height, msg.From)
-		i.backend.IncreaseCounterBanTx()
+		if !i.backend.IsEpochHeight(view.Height) {
+			i.backend.IncreaseCounterBanTx()
+		}
+		
 		return false
 	}
 
