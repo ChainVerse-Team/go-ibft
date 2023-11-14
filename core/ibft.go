@@ -395,7 +395,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 		if !i.backend.IsEpochHeight(view.Height) {
 			i.backend.IncreaseCounterSuspendTx()
 		}
-		
+
 	}
 
 	// Check if any block needs to be proposed
@@ -487,6 +487,11 @@ func (i *IBFT) handleRoundChangeMessage(view *proto.View, quorum uint64) *proto.
 		isValidFn,
 	)
 
+	msgType := "maybe_ROUND_CHANGE"
+	if len(msgs) > 0 {
+		msgType = msgs[0].Type.String()
+	}
+	i.log.Debug("quorum check", "type", msgType, "height", height, "round", round, "len(msgs)", len(msgs), "quorum", quorum)
 	if len(msgs) < int(quorum) {
 		return nil
 	}
@@ -645,7 +650,7 @@ func (i *IBFT) validateProposalCommon(msg *proto.Message, view *proto.View) bool
 		if !i.backend.IsEpochHeight(view.Height) {
 			i.backend.IncreaseCounterBanTx()
 		}
-		
+
 		return false
 	}
 
