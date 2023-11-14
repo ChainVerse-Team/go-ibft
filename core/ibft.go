@@ -338,7 +338,7 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 			i.wg.Wait()
 		}
 
-		i.log.Debug("hello debug", "round", ctxRound, "height", h)
+		i.log.Debug("hello debug", "height", h)
 
 		select {
 		case ev := <-i.newProposal:
@@ -367,6 +367,7 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 		case <-i.roundDone:
 			// The consensus cycle for the block height is finished.
 			// Stop all running worker threads
+			i.log.Debug("hello round done")
 			teardown()
 			return
 		case <-ctx.Done():
@@ -390,6 +391,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 		view = i.state.getView()
 	)
 
+	i.log.Debug("start round", "height", view.Height, "round", view.Round)
 	if view.Round > 0 && view.Height > 1 {
 		nextProposer := i.backend.CalcNextProposer(view.Height, view.Round)
 		if nextProposer == nil {
@@ -424,6 +426,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 		i.log.Debug("pre-prepare message multicasted")
 	}
 
+	i.log.Debug("enter run state", "height", view.Height, "round", view.Round, "stateName", i.state.getStateName())
 	i.runStates(ctx)
 }
 
