@@ -224,6 +224,7 @@ func (i *IBFT) watchForFutureProposal(ctx context.Context) {
 
 		i.wg.Done()
 	}()
+	i.log.Debug("start watch future proposal", "height", height, "nextRound", nextRound)
 
 	for {
 		select {
@@ -269,6 +270,7 @@ func (i *IBFT) watchForRoundChangeCertificates(ctx context.Context) {
 			HasMinRound:    true,
 		})
 	)
+	i.log.Debug("starting watch rcc", "height", height, "round", round, "quorum", quorum)
 
 	defer i.messages.Unsubscribe(sub.ID)
 
@@ -335,6 +337,8 @@ func (i *IBFT) RunSequence(ctx context.Context, h uint64) {
 			cancelRound()
 			i.wg.Wait()
 		}
+
+		i.log.Debug("hello debug", "round", ctxRound, "height", h)
 
 		select {
 		case ev := <-i.newProposal:
