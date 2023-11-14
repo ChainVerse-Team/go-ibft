@@ -141,12 +141,15 @@ func (i *IBFT) startRoundTimer(ctx context.Context, round uint64, height uint64)
 		timerDuration += i.additionalEpochTimeOut
 	}
 	timer := time.NewTimer(timerDuration)
+	i.log.Debug("started round timer", "round", round, "height", height, "timerDuration", timerDuration)
 
 	select {
 	case <-ctx.Done():
+		i.log.Debug("interrupt", "round", round, "height", height)
 		// Stop signal received, stop the timer
 		timer.Stop()
 	case <-timer.C:
+		i.log.Debug("sending signal round expired", "round", round, "height", height)
 		// Timer expired, alert the round change channel to move
 		// to the next round
 		i.signalRoundExpired(ctx)
@@ -386,7 +389,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 	if view.Round > 0 && view.Height > 1 {
 		nextProposer := i.backend.CalcNextProposer(view.Height, view.Round)
 		if nextProposer == nil {
-			i.log.Error("unable to build proposal")
+			i.log.Error("unable to build proposal at start round")
 
 			return
 		}
@@ -999,6 +1002,7 @@ func (i *IBFT) buildProposal(ctx context.Context, view *proto.View) *proto.Messa
 	//	round > 0 -> needs RCC
 	rcc := i.waitForRCC(ctx, height, round)
 	if rcc == nil {
+		i.log.Debug("rcc nil", "height", height, "round", round)
 		// Timeout occurred
 		return nil
 	}
@@ -1067,11 +1071,6 @@ func (i *IBFT) AddMessage(message *proto.Message) {
 func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 	//	Make sure the message sender is ok
 	if !i.backend.IsValidSender(message) {
-		if message.View != nil {
-			i.log.Debug("not IsValidSender", "type", message.Type.String(), "height", message.View.Height, "round", message.View.Round)
-		} else {
-			i.log.Debug("not IsValidSender")
-		}
 		return false
 	}
 
@@ -1083,7 +1082,6 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 	// Make sure the message is in accordance with
 	// the current state height, or greater
 	if i.state.getHeight() > message.View.Height {
-		i.log.Debug("height not met", "type", message.Type.String(), "height", message.View.Height, "round", message.View.Round, "state", i.state.getHeight())
 		return false
 	}
 
@@ -1094,7 +1092,6 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 		}
 	}
 
-	i.log.Debug("round check", "type", message.Type.String(), "height", message.View.Height, "round", message.View.Round, "state", i.state.getRound())
 	// Make sure the message round is >= the current state round
 	return message.View.Round >= i.state.getRound()
 }
