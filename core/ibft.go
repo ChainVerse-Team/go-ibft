@@ -1067,6 +1067,11 @@ func (i *IBFT) AddMessage(message *proto.Message) {
 func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 	//	Make sure the message sender is ok
 	if !i.backend.IsValidSender(message) {
+		if message.View != nil {
+			i.log.Debug("not IsValidSender", "type", message.Type.String(), "height", message.View.Height, "round", message.View.Round)
+		} else {
+			i.log.Debug("not IsValidSender")
+		}
 		return false
 	}
 
@@ -1078,6 +1083,7 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 	// Make sure the message is in accordance with
 	// the current state height, or greater
 	if i.state.getHeight() > message.View.Height {
+		i.log.Debug("height not met", "type", message.Type.String(), "height", message.View.Height, "round", message.View.Round, "state", i.state.getHeight())
 		return false
 	}
 
@@ -1088,6 +1094,7 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 		}
 	}
 
+	i.log.Debug("round check", "type", message.Type.String(), "height", message.View.Height, "round", message.View.Round, "state", i.state.getRound())
 	// Make sure the message round is >= the current state round
 	return message.View.Round >= i.state.getRound()
 }
