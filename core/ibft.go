@@ -922,6 +922,7 @@ func (i *IBFT) runFin() {
 
 	// Remove stale messages
 	i.messages.PruneByHeight(i.state.getHeight())
+	// testing
 }
 
 // moveToNewRound moves the state to the new round
