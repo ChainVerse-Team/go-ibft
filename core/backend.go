@@ -87,7 +87,7 @@ type Backend interface {
 	FindBadValidatorAtHeight(height uint64, nextProposer []byte) []byte
 
 	// IncreaseCounterSuspendTx counts number of suspend transaction
-	IncreaseCounterSuspendTx()
+	IncreaseCounterSuspendTx(height uint64)
 
 	// IncreaseCounterBanTx counts number of ban transaction
 	IncreaseCounterBanTx()
