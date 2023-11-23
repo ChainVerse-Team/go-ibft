@@ -1063,16 +1063,14 @@ func (i *IBFT) AddMessage(message *proto.Message) bool {
 
 // isAcceptableMessage checks if the message can even be accepted
 func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
-	var c1, c2, c3, c4 bool
-	if message.Type == proto.MessageType_PREPREPARE && i.backend.IsEpochHeight(message.View.Height) {
-		defer i.log.Debug("isAcceptableMessage", "isValidSender", c1, "validHeight", c2, "version", c3, "round", c4, "height", message.View.Height,
-			"from", fmt.Sprintf("0x%x", message.From))
-	}
 	//	Make sure the message sender is ok
 	if !i.backend.IsValidSender(message) {
 		return false
 	}
-	c1 = true
+	if message.Type == proto.MessageType_PREPREPARE && i.backend.IsEpochHeight(message.View.Height) {
+		i.log.Debug("isAcceptableMessage", "isValidSender", true, "height", message.View.Height,
+			"from", fmt.Sprintf("0x%x", message.From))
+	}
 
 	// Invalid messages are discarded
 	if message.View == nil {
@@ -1084,7 +1082,10 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 	if i.state.getHeight() > message.View.Height {
 		return false
 	}
-	c2 = true
+	if message.Type == proto.MessageType_PREPREPARE && i.backend.IsEpochHeight(message.View.Height) {
+		i.log.Debug("isAcceptableMessage", "isValidHeight", true, "height", message.View.Height,
+			"from", fmt.Sprintf("0x%x", message.From))
+	}
 
 	if message.View.Height >= applyBreakChange0 {
 		// Make sure the current version is == the message version
@@ -1092,11 +1093,18 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 			return false
 		}
 	}
-	c3 = true
+	if message.Type == proto.MessageType_PREPREPARE && i.backend.IsEpochHeight(message.View.Height) {
+		i.log.Debug("isAcceptableMessage", "isValidVersion", true, "height", message.View.Height,
+			"from", fmt.Sprintf("0x%x", message.From))
+	}
 
 	// Make sure the message round is >= the current state round
-	c4 = message.View.Round >= i.state.getRound()
-	return c4
+	ok := message.View.Round >= i.state.getRound()
+	if message.Type == proto.MessageType_PREPREPARE && i.backend.IsEpochHeight(message.View.Height) {
+		i.log.Debug("isAcceptableMessage", "isValidRound", true, "height", message.View.Height,
+			"from", fmt.Sprintf("0x%x", message.From))
+	}
+	return ok
 }
 
 // ExtendRoundTimeout extends each round's timer by the specified amount.
