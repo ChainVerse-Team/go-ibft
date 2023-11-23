@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -395,7 +396,7 @@ func (i *IBFT) startRound(ctx context.Context) {
 		if !i.backend.IsEpochHeight(view.Height) {
 			i.backend.IncreaseCounterSuspendTx()
 		}
-		
+
 	}
 
 	// Check if any block needs to be proposed
@@ -645,7 +646,7 @@ func (i *IBFT) validateProposalCommon(msg *proto.Message, view *proto.View) bool
 		if !i.backend.IsEpochHeight(view.Height) {
 			i.backend.IncreaseCounterBanTx()
 		}
-		
+
 		return false
 	}
 
@@ -1046,24 +1047,32 @@ func (i *IBFT) acceptProposal(proposalMessage *proto.Message) {
 }
 
 // AddMessage adds a new message to the IBFT message system
-func (i *IBFT) AddMessage(message *proto.Message) {
+func (i *IBFT) AddMessage(message *proto.Message) bool {
 	// Make sure the message is present
 	if message == nil {
-		return
+		return false
 	}
 
 	// Check if the message should even be considered
 	if i.isAcceptableMessage(message) {
 		i.messages.AddMessage(message)
+		return true
 	}
+	return false
 }
 
 // isAcceptableMessage checks if the message can even be accepted
 func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
+	var c1, c2, c3, c4 bool
+	if message.Type == proto.MessageType_PREPREPARE && i.backend.IsEpochHeight(message.View.Height) {
+		defer i.log.Debug("isAcceptableMessage", "isValidSender", c1, "validHeight", c2, "version", c3, "round", c4, "height", message.View.Height,
+			"from", fmt.Sprintf("0x%x", message.From))
+	}
 	//	Make sure the message sender is ok
 	if !i.backend.IsValidSender(message) {
 		return false
 	}
+	c1 = true
 
 	// Invalid messages are discarded
 	if message.View == nil {
@@ -1075,6 +1084,7 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 	if i.state.getHeight() > message.View.Height {
 		return false
 	}
+	c2 = true
 
 	if message.View.Height >= applyBreakChange0 {
 		// Make sure the current version is == the message version
@@ -1082,9 +1092,11 @@ func (i *IBFT) isAcceptableMessage(message *proto.Message) bool {
 			return false
 		}
 	}
+	c3 = true
 
 	// Make sure the message round is >= the current state round
-	return message.View.Round >= i.state.getRound()
+	c4 = message.View.Round >= i.state.getRound()
+	return c4
 }
 
 // ExtendRoundTimeout extends each round's timer by the specified amount.
